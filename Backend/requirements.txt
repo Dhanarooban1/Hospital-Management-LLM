@@ -5,7 +5,7 @@ PyPDF2
 chromadb
 faiss-cpu
 pdf2image
-Flask==2.0.3
+Flask==2.2.5
 Flask-SQLAlchemy==3.0.5
 Flask-Marshmallow==0.15.0
 marshmallow==3.19.0
