@@ -14,28 +14,45 @@ def add_user():
         if not data:
             return jsonify({"error": "No data provided"}), 400
         
-        admitted_date = datetime.strptime(data['admitted_date'], '%Y-%m-%d').date()
-        
-        new_patient = Patient(
-            name=data['name'],
-            age=data['age'],
-            gender=data['gender'],
-            condition=data['condition'],
-            admitted_date=admitted_date,
-            lab_results_pending=data['lab_results_pending'] == "Yes",
-            emergency_visit_today=data['emergency_visit_today'] == "Yes"
-        )
-        
-        db.session.add(new_patient)
-        db.session.commit()
-        return user_schema.jsonify(new_patient), 201
+        # Check if the data is a list or single object
+        if isinstance(data, list):
+            # Handle multiple patients
+            added_patients = []
+            for patient_data in data:
+                patient = create_patient(patient_data)
+                added_patients.append(patient)
+            
+            db.session.add_all(added_patients)
+            db.session.commit()
+            return jsonify([user_schema.dump(patient) for patient in added_patients]), 201
+        else:
+            # Handle single patient
+            patient = create_patient(data)
+            db.session.add(patient)
+            db.session.commit()
+            return user_schema.jsonify(patient), 201
+            
     except KeyError as e:
         return jsonify({"error": f"Missing field in request: {str(e)}"}), 400
     except ValueError as e:
         return jsonify({"error": f"Invalid data format: {str(e)}"}), 400
     except Exception as e:
+        db.session.rollback()  # Rollback in case of error
         return jsonify({"error": str(e)}), 500
 
+def create_patient(data):
+    """Helper function to create a patient from data"""
+    admitted_date = datetime.strptime(data['admitted_date'], '%Y-%m-%d').date()
+    
+    return Patient(
+        name=data['name'],
+        age=data['age'],
+        gender=data['gender'],
+        condition=data['condition'],
+        admitted_date=admitted_date,
+        lab_results_pending=data['lab_results_pending'] == "Yes",
+        emergency_visit_today=data['emergency_visit_today'] == "Yes"
+    )
 
 
 
