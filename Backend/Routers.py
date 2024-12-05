@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify
 from extensions import db
-from models import Patient, user_schema, users_schema
+from CreateSQlData import Patient, user_schema, users_schema
 from datetime import datetime
-from Data_Controller import LLM_Data_Controller
+from LLMQueryGenerator import LLM_Data_Controller
 
 user_bp = Blueprint('user_bp', __name__)
 

@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 import google.generativeai as genai
 
 # Configure Gemini
-genai.configure(api_key=os.getenv("AIzaSyA8rae43oB3ZI6MYLdFy9iTPgBvB-esz2c"))
+genai.configure(api_key = os.getenv("GOOGLE_API_KEY"))
 model = genai.GenerativeModel('gemini-pro')
 
 def clean_sql_query(sql_query):
