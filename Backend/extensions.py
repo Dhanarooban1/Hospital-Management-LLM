@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 
-# Initialize Flask extensions
+# Flask Extensions
 db = SQLAlchemy()
 ma = Marshmallow()

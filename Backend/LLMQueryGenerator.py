@@ -1,16 +1,13 @@
 from dotenv import load_dotenv
 load_dotenv()
 import os
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
 import google.generativeai as genai
 
-# Configure Gemini
-genai.configure(api_key = os.getenv("GOOGLE_API_KEY"))
+
+genai.configure(api_key=os.getenv("AIzaSyAvn0D4WLk11s71EisxvyQRJYmKFXMnI6k"))
 model = genai.GenerativeModel('gemini-pro')
 
 def clean_sql_query(sql_query):
-    """Remove markdown formatting and clean the SQL query"""
     sql_query = sql_query.replace('```sql', '').replace('```', '')
     return sql_query.strip()
 
@@ -22,49 +19,56 @@ def get_gemini_response(question, prompt):
     except Exception as e:
         raise Exception(f"Error generating response: {e}")
 
-def execute_query(sql, db_url=None):
-    if db_url is None:
-        db_url = 'sqlite:///dp.sqlite'
-    
-    try:
-        engine = create_engine(db_url)
-        Session = sessionmaker(bind=engine)
-        session = Session()
-        
-        result = session.execute(text(sql))
-        
-        # Get column names from the result
-        columns = result.keys()
-        
-        # Convert rows to dictionaries with column names as keys
-        rows = []
-        for row in result.fetchall():
-            row_dict = {}
-            for idx, column in enumerate(columns):
-                row_dict[str(column)] = row[idx]
-            rows.append(row_dict)
-            
-        return rows
-    except Exception as e:
-        raise Exception(f"SQLAlchemy Error: {e}")
-    finally:
-        session.close()
 
 prompt = [
     """
-    You are an expert at generating SQL queries from natural language questions. The SQL database is named Patient and contains the following columns:
-        id: integer, primary key
-        name: string, the patient's name
-        age: integer, the patient's age
-        gender: string, the patient's gender (e.g., 'Male', 'Female')
-        condition: string, the medical condition of the patient
-        admitted_date: date, the date of admission
-        lab_results_pending: boolean, indicates if lab results are pending
-        emergency_visit_today: boolean, indicates if the patient visited the emergency room today
-    Task:
-        Given a natural language question about the patient data, your job is to:
-        1. Generate an accurate SQL query to retrieve the required information from the database.
-        2. Output the raw SQL query only, without any markdown formatting, backticks, or explanations.
+   # SQL Query Generation Instructions
+## Database Schema
+Table: PATIENT
+- id: integer (primary key)
+- name: string
+- age: integer
+- gender: string
+- condition: string
+- admitted_date: date
+- lab_results_pending: boolean
+- emergency_visit_today: boolean
+
+## Task
+Generate an accurate SQL query for natural language questions about patient data.
+
+## Key Guidelines
+1. Use explicit column selection (avoid SELECT *)
+2. Ensure SQLite compatibility
+3. Output raw SQL query only
+4. No markdown or additional formatting
+5. Use single-line or simple line breaks
+6. Include appropriate WHERE, ORDER BY clauses as needed
+
+## Example Queries
+
+### Simple Query
+SELECT name, age, condition FROM PATIENT WHERE age > 30;
+
+### Complex Query
+SELECT 
+    name, 
+    age, 
+    condition, 
+    CASE 
+        WHEN lab_results_pending = 1 THEN 'Pending'
+        ELSE 'Completed'
+    END AS lab_status,
+    CASE 
+        WHEN emergency_visit_today = 1 THEN 'Yes'
+        ELSE 'No'
+    END AS emergency_visit,
+    STRFTIME('%Y-%m-%d', admitted_date) AS admitted_date,
+    DATE('now') AS current_date,
+    (JULIANDAY('now') - JULIANDAY(admitted_date)) AS days_admitted
+FROM PATIENT
+WHERE age > 30 AND lab_results_pending = 1
+ORDER BY days_admitted DESC;
     Rules:
         - Output the bare SQL query only, no markdown, no formatting
         - Do not use ```sql``` tags or any other markdown
@@ -76,10 +80,8 @@ prompt = [
 
 class LLM_Data_Controller:
     def __init__(self):
+      
         self.prompt = prompt
     
     def generate_gemini_query(self, user_question):
         return get_gemini_response(user_question, self.prompt)
-    
-    def execute_query(self, sql):
-        return execute_query(sql)
