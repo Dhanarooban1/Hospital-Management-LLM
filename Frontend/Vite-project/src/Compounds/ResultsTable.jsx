@@ -1,11 +1,52 @@
 import React, { useState } from 'react';
 import { ArrowUpDown, Search, AlertCircle } from 'lucide-react';
 import { useQueryContext } from '../Functions/Controller';
+
 const ResultsTable = () => {
   const { results } = useQueryContext();
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Transform data into objects with named keys
+  const transformedResults = results.map((row) => ({
+    id: row[0],
+    name: row[1],
+    age: row[2],
+    gender: row[3],
+    condition: row[4],
+    date: row[5],
+    status: row[6],
+    flag: row[7],
+  })) || [];
+
+  console.log(transformedResults)
+  console.log(results)
+  
+  const sortedResults = [...transformedResults].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    const aValue = a[sortConfig.key] || '';
+    const bValue = b[sortConfig.key] || '';
+    return sortConfig.direction === 'asc'
+      ? aValue > bValue ? 1 : -1
+      : aValue < bValue ? 1 : -1;
+  });
+
+ 
+  const filteredResults = sortedResults.filter((item) =>
+    Object.values(item).some((value) =>
+      value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+
+  
+  // Handle sort
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
 
   if (!results) {
     return (
@@ -17,35 +58,6 @@ const ResultsTable = () => {
       </div>
     );
   }
-
-  // Sorting logic
-  const sortedResults = [...results.data].sort((a, b) => {
-    if (!sortConfig.key) return 0;
-    
-    const aValue = a[sortConfig.key] || '';
-    const bValue = b[sortConfig.key] || '';
-    
-    if (sortConfig.direction === 'asc') {
-      return aValue > bValue ? 1 : -1;
-    }
-    return aValue < bValue ? 1 : -1;
-  });
-
-  // Filtering logic
-  const filteredResults = sortedResults.filter(item => 
-    Object.values(item).some(value => 
-      value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
-
-  // Handle sort
-  const requestSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
-  };
 
   return (
     <div className="w-full space-y-4">
@@ -60,7 +72,6 @@ const ResultsTable = () => {
         />
       </div>
 
-  
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
         <table className="w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -81,39 +92,24 @@ const ResultsTable = () => {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {filteredResults.map((item, index) => (
-              <tr 
-                key={item.id || index}
-                className="hover:bg-gray-50 transition-colors"
-              >
+              <tr key={item.id || index} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.id || "N/A"}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name || "Unknown"}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.age || "N/A"}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.gender || "N/A"}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    item.condition === 'Critical' ? 'bg-red-100 text-red-800' :
-                    item.condition === 'Stable' ? 'bg-green-100 text-green-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {item.condition || "N/A"}
-                  </span>
-                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.condition || "N/A"}</td>
               </tr>
             ))}
           </tbody>
         </table>
-
-        {/* Empty State */}
         {filteredResults.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">No matching results found</p>
           </div>
         )}
       </div>
-
-      {/* Results Count */}
       <div className="text-sm text-gray-500">
-        Showing {filteredResults.length} of {results.data.length} results
+        Showing {filteredResults.length} of {transformedResults.length} results
       </div>
     </div>
   );
