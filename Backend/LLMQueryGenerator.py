@@ -4,7 +4,7 @@ import os
 import google.generativeai as genai
 
 
-genai.configure(api_key=os.getenv("AIzaSyAvn0D4WLk11s71EisxvyQRJYmKFXMnI6k"))
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 model = genai.GenerativeModel('gemini-pro')
 
 def clean_sql_query(sql_query):
@@ -34,7 +34,21 @@ Table: PATIENT
 - lab_results_pending: boolean
 - emergency_visit_today: boolean
 
+
+
 ## Task
+Generate an SQL query for a table with the following columns:
+- id: integer
+- name: string
+- age: integer
+- gender: string
+- condition: string
+
+Ensure the query:
+- Returns columns in the order: id, name, age, gender, condition.
+- Is compatible with SQLite.
+- Includes WHERE clauses as necessary.
+
 Generate an accurate SQL query for natural language questions about patient data.
 
 ## Key Guidelines

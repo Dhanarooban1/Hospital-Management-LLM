@@ -1,5 +1,4 @@
-// QueryContext.js
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
 const QueryContext = createContext();
@@ -8,29 +7,42 @@ export const QueryProvider = ({ children }) => {
   const [question, setQuestion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState({ data: [] });
+  const [queryReady, setQueryReady] = useState(false); 
 
-  const onQuerySubmit = async (query) => {
-    try {
-      setIsLoading(true);
-      
-      const response = await axios.post('http://127.0.0.1:5000/post/query', 
-        { question: query.trim() },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          withCredentials: true
-        }
-      );
-      setResults(response.data.results);
-      return response.data.results;
-    } catch (error) {
-      console.error('Error sending query:', error.response?.data || error.message);
-    } finally {
-      setIsLoading(false);
-    }
+  const onQuerySubmit = (query) => {
+    setQueryReady(true);
+    setQuestion(query.trim());
   };
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (!queryReady) return;
+
+      try {
+        setIsLoading(true);
+
+        const response = await axios.post(
+          'http://127.0.0.1:5000/post/query',
+          { question },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            withCredentials: true,
+          }
+        );
+        setResults(response.data.results);
+      } catch (error) {
+        console.error('Error sending query:', error.response?.data || error.message);
+      } finally {
+        setIsLoading(false);
+        setQueryReady(false);
+      }
+    };
+
+    fetchResults();
+  }, [queryReady, question]);
 
   return (
     <QueryContext.Provider

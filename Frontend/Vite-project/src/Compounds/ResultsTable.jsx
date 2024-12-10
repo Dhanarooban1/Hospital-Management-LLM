@@ -3,25 +3,21 @@ import { ArrowUpDown, Search, AlertCircle } from 'lucide-react';
 import { useQueryContext } from '../Functions/Controller';
 
 const ResultsTable = () => {
-  const { results } = useQueryContext();
+  const { results = [] } = useQueryContext(); // Default to an empty array
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Transform data into objects with named keys
-  const transformedResults = results.map((row) => ({
-    id: row[0],
-    name: row[1],
-    age: row[2],
-    gender: row[3],
-    condition: row[4],
-    date: row[5],
-    status: row[6],
-    flag: row[7],
-  })) || [];
+  const transformedResults = Array.isArray(results)
+    ? results.map((row) => ({
+        id: row[0],
+        name: row[1],
+        age: row[2],
+        gender: row[3],
+        condition: row[4],
+      }))
+    : [];
 
-  console.log(transformedResults)
-  console.log(results)
-  
+
   const sortedResults = [...transformedResults].sort((a, b) => {
     if (!sortConfig.key) return 0;
     const aValue = a[sortConfig.key] || '';
@@ -31,15 +27,12 @@ const ResultsTable = () => {
       : aValue < bValue ? 1 : -1;
   });
 
- 
   const filteredResults = sortedResults.filter((item) =>
     Object.values(item).some((value) =>
       value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
 
-  
-  // Handle sort
   const requestSort = (key) => {
     let direction = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
@@ -48,7 +41,7 @@ const ResultsTable = () => {
     setSortConfig({ key, direction });
   };
 
-  if (!results) {
+  if (!Array.isArray(results)) {
     return (
       <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
         <div className="text-center">
