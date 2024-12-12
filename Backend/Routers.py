@@ -34,12 +34,13 @@ def get_data_from_llm():
         return jsonify({"error": str(e)}), 500
 
 # Commented out previous routes for reference
-# @user_bp.route('/user', methods=['POST'])
-# def add_user():
-#     try:
-#         data = request.get_json()
-#         if not data:
-#             return jsonify({"error": "No data provided"}), 400
+@user_bp.route('/user', methods=['POST'])
+def add_user():
+    try:
+       print("Dhana")
+    except KeyError as e:
+        return jsonify({"error": f"Missing field in request: {str(e)}"}), 400
+
         
 #         # Check if the data is a list or single object
 #         if isinstance(data, list):
